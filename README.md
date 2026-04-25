@@ -18,7 +18,7 @@ Each agent was asked to generate three versions from this prompt, and I selected
 
 [Play the demo](https://abagames.github.io/flipwalker-game-benchmark/opencode-minimax/)
 
-The result does not implement the requested automatically walking character. Instead, the player appears to move left and right only while a button is held in midair. The yellow circle that seems to be the key is embedded in the floor and cannot be collected.
+The result does not implement the requested automatically walking character. Instead, the player appears to move left and right only while airborne. The yellow circle that seems to be the key is embedded in the floor and cannot be collected.
 
 ![](docs/screenshots/opencode-minimax.gif)
 
