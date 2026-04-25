@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flipline Vault</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="hero">
+        <p class="eyebrow">Vanilla JS Puzzle Platformer</p>
+        <h1>Flipline Vault</h1>
+        <p class="lede">
+          The courier never stops walking. Your only move is to flip gravity at
+          exactly the right moments, steal the key, and reach the vault door.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="hud">
+          <div>
+            <span class="label">Status</span>
+            <strong id="status">Running</strong>
+          </div>
+          <div>
+            <span class="label">Key</span>
+            <strong id="key-status">Missing</strong>
+          </div>
+          <div>
+            <span class="label">Time</span>
+            <strong id="time">0.0s</strong>
+          </div>
+        </div>
+
+        <canvas
+          id="game"
+          width="896"
+          height="576"
+          aria-label="Puzzle game where you flip gravity to guide an auto-walking character"
+        ></canvas>
+
+        <div class="controls">
+          <button id="reset-button" type="button">Reset</button>
+          <button id="replay-button" type="button">Watch Solution</button>
+        </div>
+
+        <p class="instructions">
+          Press <kbd>Space</kbd>, <kbd>Arrow Up</kbd>, or click/tap the playfield
+          to flip gravity. Press <kbd>R</kbd> to reset.
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.mjs"></script>
+  </body>
+</html>

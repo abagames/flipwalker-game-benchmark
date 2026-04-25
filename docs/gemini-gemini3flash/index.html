@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Walker Puzzle</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        canvas {
+            background: #34495e;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            image-rendering: pixelated;
+        }
+        .ui {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #message {
+            font-size: 24px;
+            margin-bottom: 10px;
+            height: 30px;
+        }
+        .controls {
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+    <div id="message">Collect the Key and reach the Door!</div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="ui">
+        <div class="controls">Press SPACE or Click to flip gravity</div>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const msg = document.getElementById('message');
+
+// Game constants
+const GRAVITY = 0.5;
+const WALK_SPEED = 3;
+const PLAYER_SIZE = 30;
+const KEY_SIZE = 20;
+const DOOR_SIZE = 50;
+
+// Game state
+let player = {
+    x: 50,
+    y: 520,
+    vx: WALK_SPEED,
+    vy: 0,
+    width: PLAYER_SIZE,
+    height: PLAYER_SIZE,
+    gDir: 1, // 1 for down, -1 for up
+    onGround: true,
+    hasKey: false,
+    dead: false,
+    won: false
+};
+
+// Level data - Redesigned for a specific intended path
+const platforms = [
+    // Bottom floor
+    { x: 0, y: 550, w: 200, h: 50 },
+    { x: 600, y: 550, w: 200, h: 50 },
+    // Ceiling
+    { x: 0, y: 0, w: 800, h: 50 },
+    // Challenge platforms
+    { x: 250, y: 450, w: 100, h: 20 }, // Step 1: Flip up to here
+    { x: 450, y: 350, w: 100, h: 20 }, // Step 2: Flip down to here from ceiling
+    { x: 200, y: 200, w: 150, h: 20 }, // Step 3: Flip up to here
+    { x: 500, y: 150, w: 100, h: 20 }, // Step 4: Near key
+    { x: 350, y: 100, w: 100, h: 20 }  // Step 5: Key platform
+];
+
+const spikes = [
+    { x: 200, y: 550, w: 400, h: 20 }, // Large floor gap
+    { x: 400, y: 50, w: 100, h: 20 },  // Ceiling spike blocking easy pass
+    { x: 100, y: 50, w: 50, h: 20 },   // Ceiling spike
+    { x: 250, y: 430, w: 100, h: 20 }, // Spikes on top of Step 1 platform (forces flip)
+    { x: 450, y: 370, w: 100, h: 20 }  // Spikes on bottom of Step 2 platform
+];
+
+const key = { x: 385, y: 65, w: KEY_SIZE, h: KEY_SIZE, collected: false };
+const door = { x: 720, y: 500, w: DOOR_SIZE, h: DOOR_SIZE };
+
+function reset() {
+    player = {
+        x: 50,
+        y: 520,
+        vx: WALK_SPEED,
+        vy: 0,
+        width: PLAYER_SIZE,
+        height: PLAYER_SIZE,
+        gDir: 1,
+        onGround: true,
+        hasKey: false,
+        dead: false,
+        won: false
+    };
+    key.collected = false;
+    msg.textContent = "Collect the Key and reach the Door!";
+}
+
+function flipGravity() {
+    if (player.dead || player.won) {
+        reset();
+        return;
+    }
+    player.gDir *= -1;
+    player.onGround = false;
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') flipGravity();
+});
+canvas.addEventListener('mousedown', flipGravity);
+
+function checkCollision(a, b) {
+    return a.x < b.x + b.w &&
+           a.x + a.width > b.x &&
+           a.y < b.y + b.h &&
+           a.y + a.height > b.y;
+}
+
+function update() {
+    if (player.dead || player.won) return;
+
+    // Apply gravity
+    player.vy += GRAVITY * player.gDir;
+    player.y += player.vy;
+    player.x += player.vx;
+
+    // Platform collisions
+    player.onGround = false;
+    for (let p of platforms) {
+        if (checkCollision(player, p)) {
+            // Collision from top
+            if (player.vy > 0 && player.y + player.height - player.vy <= p.y) {
+                player.y = p.y - player.height;
+                player.vy = 0;
+                player.onGround = player.gDir === 1;
+            }
+            // Collision from bottom
+            else if (player.vy < 0 && player.y - player.vy >= p.y + p.h) {
+                player.y = p.y + p.h;
+                player.vy = 0;
+                player.onGround = player.gDir === -1;
+            }
+            // Side collision (wall)
+            else if (player.vx > 0 && player.x + player.width - player.vx <= p.x) {
+                player.x = p.x - player.width;
+                player.vx *= -1;
+            }
+            else if (player.vx < 0 && player.x - player.vx >= p.x + p.w) {
+                player.x = p.x + p.w;
+                player.vx *= -1;
+            }
+        }
+    }
+
+    // Spike collision
+    for (let s of spikes) {
+        if (checkCollision(player, s)) {
+            player.dead = true;
+            msg.textContent = "Oops! Press Space to try again.";
+        }
+    }
+
+    // Boundaries
+    if (player.x < 0) { player.x = 0; player.vx *= -1; }
+    if (player.x + player.width > canvas.width) { player.x = canvas.width - player.width; player.vx *= -1; }
+    if (player.y < 0 || player.y + player.height > canvas.height) {
+        player.dead = true;
+        msg.textContent = "Out of bounds! Press Space to try again.";
+    }
+
+    // Key collection
+    if (!key.collected && checkCollision(player, key)) {
+        key.collected = true;
+        player.hasKey = true;
+        msg.textContent = "Got the key! Now reach the door.";
+    }
+
+    // Door collision
+    if (player.hasKey && checkCollision(player, door)) {
+        player.won = true;
+        msg.textContent = "You Won! Press Space to play again.";
+    }
+}
+
+function draw() {
+    // Gradient Background
+    let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGrad.addColorStop(0, '#1a2a3a');
+    bgGrad.addColorStop(1, '#2c3e50');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Platforms
+    ctx.fillStyle = '#7f8c8d';
+    for (let p of platforms) {
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = '#95a5a6';
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+    }
+
+    // Spikes
+    ctx.fillStyle = '#e74c3c';
+    for (let s of spikes) {
+        let count = Math.floor(s.w / 20);
+        let sw = s.w / count;
+        for (let i = 0; i < count; i++) {
+            ctx.beginPath();
+            if (s.y < 300) { // Ceiling spikes
+                ctx.moveTo(s.x + i*sw, s.y);
+                ctx.lineTo(s.x + i*sw + sw/2, s.y + s.h);
+                ctx.lineTo(s.x + (i+1)*sw, s.y);
+            } else { // Floor spikes
+                ctx.moveTo(s.x + i*sw, s.y + s.h);
+                ctx.lineTo(s.x + i*sw + sw/2, s.y);
+                ctx.lineTo(s.x + (i+1)*sw, s.y + s.h);
+            }
+            ctx.fill();
+        }
+    }
+
+    // Key
+    if (!key.collected) {
+        let bounce = Math.sin(Date.now() / 200) * 5;
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(key.x, key.y + bounce, key.w, key.h);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(key.x-2, key.y + bounce-2, key.w+4, key.h+4);
+    }
+
+    // Door
+    ctx.fillStyle = player.hasKey ? '#2ecc71' : '#34495e';
+    ctx.fillRect(door.x, door.y, door.w, door.h);
+    ctx.strokeStyle = '#ecf0f1';
+    ctx.strokeRect(door.x, door.y, door.w, door.h);
+    if (player.hasKey) {
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(door.x + 5, door.y + 5, door.w - 10, door.h - 10);
+    }
+
+    // Player
+    ctx.fillStyle = player.dead ? '#c0392b' : '#3498db';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = player.dead ? '#e74c3c' : '#2980b9';
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.shadowBlur = 0;
+    
+    // Eyes
+    ctx.fillStyle = 'white';
+    let eyeY = player.gDir === 1 ? player.y + 5 : player.y + 15;
+    let eyeX = player.vx > 0 ? player.x + 20 : player.x + 5;
+    ctx.fillRect(eyeX, eyeY, 5, 5);
+
+    requestAnimationFrame(() => {
+        update();
+        draw();
+    });
+}
+
+// Simulation for verification of the new level
+function runSimulation() {
+    console.log("Starting simulation for new level layout...");
+    reset();
+    
+    const events = [
+        { time: 500, action: () => flipGravity() },  // Flip to ceiling to pass gap
+        { time: 2200, action: () => flipGravity() }, // Flip down to catch Step 2 platform
+        { time: 4000, action: () => flipGravity() }, // Flip up towards key area
+        { time: 5500, action: () => flipGravity() }, // Get key and flip down
+        { time: 8000, action: () => flipGravity() }, // Land for door
+    ];
+
+    let startTime = Date.now();
+    let eventIdx = 0;
+
+    function check() {
+        let elapsed = Date.now() - startTime;
+        if (eventIdx < events.length && elapsed >= events[eventIdx].time) {
+            events[eventIdx].action();
+            console.log(`Simulation event ${eventIdx} at ${elapsed}ms`);
+            eventIdx++;
+        }
+
+        if (player.won) {
+            console.log("SIMULATION SUCCESS: Level is completable.");
+            return;
+        }
+        if (player.dead) {
+            console.log("SIMULATION FAILED: Player died.");
+            return;
+        }
+        if (elapsed > 15000) {
+            console.log("SIMULATION TIMEOUT: Level might be too hard or broken.");
+            return;
+        }
+        requestAnimationFrame(check);
+    }
+    check();
+}
+
+// Uncomment to run automatically in console for testing
+// setTimeout(runSimulation, 1000);
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "flipwalker-gif-recorder",
+  "version": "1.0.0",
+  "description": "Records preview GIFs for each benchmark entry using Playwright + ImageMagick",
+  "type": "module",
+  "scripts": {
+    "install-browser": "playwright install chromium",
+    "record": "node record-gifs.js",
+    "record:one": "node record-gifs.js"
+  },
+  "dependencies": {
+    "playwright": "^1.52.0"
+  }
+}

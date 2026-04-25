@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gravity Key Run</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="game-panel" aria-label="Gravity Key Run game">
+        <div class="hud">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span>Gravity Key Run</span>
+          </div>
+          <div class="meters" aria-live="polite">
+            <span id="keyMeter" class="meter">Key: missing</span>
+            <span id="statusMeter" class="meter">Run</span>
+          </div>
+          <div class="actions">
+            <button id="flipButton" class="icon-button" type="button" title="Flip gravity" aria-label="Flip gravity">
+              <span aria-hidden="true">Flip</span>
+            </button>
+            <button id="resetButton" class="icon-button" type="button" title="Reset" aria-label="Reset run">
+              <span aria-hidden="true">Reset</span>
+            </button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="game" width="960" height="540"></canvas>
+        </div>
+      </section>
+    </main>
+    <script src="physics.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
