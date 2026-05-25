@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlipWalker</title>
+<style>
+  body {
+    margin: 0;
+    background: #0d0d1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+  canvas {
+    border: 2px solid #333;
+    background: #1a1a2e;
+    image-rendering: pixelated;
+  }
+  #ui {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    text-align: center;
+    pointer-events: none;
+    text-shadow: 1px 1px 2px #000;
+  }
+  #win {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #2ecc71;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px #000;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="800" height="600"></canvas>
+<div id="ui">
+  <div>SPACE or TAP to flip gravity</div>
+  <div style="font-size:12px;color:#aaa;margin-top:4px">R to restart</div>
+</div>
+<div id="win">
+  <div>LEVEL CLEAR!</div>
+  <div style="font-size:16px;color:#fff;margin-top:10px">Press R to play again</div>
+</div>
+<button id="autoplay" style="position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:4px 8px; font-size:12px; background:#333; color:#fff; border:1px solid #555; border-radius:4px; cursor:pointer; z-index:100;">Auto-Play</button>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const winDiv = document.getElementById('win');
+
+const GRAVITY = 0.4;
+const WALK_SPEED = 2;
+const PLAYER_RADIUS = 10;
+
+let player = {
+  x: 50,
+  y: 490,
+  vx: WALK_SPEED,
+  vy: 0,
+  radius: PLAYER_RADIUS,
+  gravityDir: 1,
+  onGround: false,
+  dead: false,
+  hasKey: false
+};
+
+let keyObj = { x: 410, y: 320, radius: 8, angle: 0 };
+let door = { x: 160, y: 120, w: 30, h: 30 };
+let won = false;
+let respawnTimer = 0;
+var frame = 0;
+
+function flipGravity() {
+  if (!won) {
+    player.gravityDir *= -1;
+    player.onGround = false;
+  }
+}
+window.flipGravity = flipGravity;
+
+const platforms = [
+  { x: 0, y: 500, w: 280, h: 10 },
+  { x: 520, y: 500, w: 280, h: 10 },
+  { x: 300, y: 300, w: 200, h: 10 },
+  { x: 100, y: 150, w: 150, h: 10 },
+  { x: 0, y: 50, w: 800, h: 10 }
+];
+
+const spikes = { x: 280, y: 520, w: 240, h: 80 };
+
+function reset() {
+  player.x = 50;
+  player.y = 490;
+  player.vx = WALK_SPEED;
+  player.vy = 0;
+  player.gravityDir = 1;
+  player.onGround = false;
+  player.dead = false;
+  player.hasKey = false;
+  keyObj.angle = 0;
+  won = false;
+  respawnTimer = 0;
+  winDiv.style.display = 'none';
+}
+
+function update() {
+  frame++;
+  window.frame = frame;
+  if (won) return;
+  if (player.dead) {
+    respawnTimer--;
+    if (respawnTimer <= 0) {
+      reset();
+    }
+    return;
+  }
+
+  player.onGround = false;
+  player.vy += GRAVITY * player.gravityDir;
+
+  let nextX = player.x + player.vx;
+  let nextY = player.y + player.vy;
+
+  for (let p of platforms) {
+    if (rectCircleOverlap(nextX, nextY, player.radius, p)) {
+      let wasAbove = player.y + player.radius <= p.y;
+      let wasBelow = player.y - player.radius >= p.y + p.h;
+      let wasLeft = player.x + player.radius <= p.x;
+      let wasRight = player.x - player.radius >= p.x + p.w;
+
+      if (wasAbove && player.vy >= 0) {
+        nextY = p.y - player.radius;
+        player.vy = 0;
+        player.onGround = true;
+      } else if (wasBelow && player.vy <= 0) {
+        nextY = p.y + p.h + player.radius;
+        player.vy = 0;
+        player.onGround = true;
+      } else if (wasLeft && player.vx >= 0) {
+        nextX = p.x - player.radius;
+        player.vx = -WALK_SPEED;
+      } else if (wasRight && player.vx <= 0) {
+        nextX = p.x + p.w + player.radius;
+        player.vx = WALK_SPEED;
+      }
+    }
+  }
+
+  if (nextX - player.radius < 0) {
+    nextX = player.radius;
+    player.vx = WALK_SPEED;
+  }
+  if (nextX + player.radius > canvas.width) {
+    nextX = canvas.width - player.radius;
+    player.vx = -WALK_SPEED;
+  }
+
+  if (nextY + player.radius > canvas.height + 100 || nextY - player.radius < -100) {
+    player.dead = true;
+    respawnTimer = 40;
+  }
+
+  if (rectCircleOverlap(nextX, nextY, player.radius, spikes)) {
+    player.dead = true;
+    respawnTimer = 40;
+  }
+
+  player.x = nextX;
+  player.y = nextY;
+
+  if (!player.hasKey) {
+    let dx = player.x - keyObj.x;
+    let dy = player.y - keyObj.y;
+    if (Math.sqrt(dx * dx + dy * dy) < player.radius + keyObj.radius) {
+      player.hasKey = true;
+    }
+  }
+
+  keyObj.angle += 0.05;
+
+  if (player.hasKey &&
+      player.x > door.x && player.x < door.x + door.w &&
+      player.y > door.y && player.y < door.y + door.h) {
+    won = true;
+    winDiv.style.display = 'block';
+  }
+}
+
+function rectCircleOverlap(cx, cy, r, rect) {
+  let closestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+  let closestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+  let dx = cx - closestX;
+  let dy = cy - closestY;
+  return (dx * dx + dy * dy) < (r * r);
+}
+
+function draw() {
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let p of platforms) {
+    ctx.fillStyle = '#4a4a6a';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = '#5a5a7a';
+    ctx.fillRect(p.x, p.y, p.w, 2);
+  }
+
+  ctx.fillStyle = '#222';
+  ctx.fillRect(spikes.x, spikes.y, spikes.w, spikes.h);
+  ctx.fillStyle = '#c0392b';
+  for (let i = 0; i < spikes.w; i += 16) {
+    ctx.beginPath();
+    ctx.moveTo(spikes.x + i, spikes.y);
+    ctx.lineTo(spikes.x + i + 8, spikes.y + 20);
+    ctx.lineTo(spikes.x + i + 16, spikes.y);
+    ctx.fill();
+  }
+
+  if (!player.hasKey) {
+    ctx.save();
+    ctx.translate(keyObj.x, keyObj.y);
+    ctx.rotate(keyObj.angle);
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(-4, -8, 8, 16);
+    ctx.beginPath();
+    ctx.arc(0, -8, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(0, 0, 6, 4);
+    ctx.fillRect(0, 4, 4, 4);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = player.hasKey ? '#2ecc71' : '#7f8c8d';
+  ctx.fillRect(door.x, door.y, door.w, door.h);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(door.x + 4, door.y + 4, door.w - 8, door.h - 8);
+  ctx.fillStyle = player.hasKey ? '#2ecc71' : '#555';
+  ctx.fillRect(door.x + 10, door.y + 8, 10, 14);
+
+  ctx.fillStyle = player.dead ? '#e74c3c' : '#3498db';
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  let eyeOffset = player.vx >= 0 ? 3 : -3;
+  ctx.arc(player.x + eyeOffset, player.y - 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function loop() {
+  update();
+  if (window.autoPlayPending && window.autoPlayPending.has(frame)) {
+    flipGravity();
+    window.autoPlayPending.delete(frame);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+document.getElementById('autoplay').addEventListener('click', () => {
+  window.autoPlayPending = new Set([100, 620, 665]);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (!won) {
+      player.gravityDir *= -1;
+      player.onGround = false;
+    }
+  }
+  if (e.code === 'KeyR') {
+    reset();
+  }
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (!won) {
+    player.gravityDir *= -1;
+    player.onGround = false;
+  }
+});
+
+canvas.addEventListener('click', () => {
+  if (!won) {
+    player.gravityDir *= -1;
+    player.onGround = false;
+  }
+});
+
+reset();
+loop();
+</script>
+</body>
+</html>

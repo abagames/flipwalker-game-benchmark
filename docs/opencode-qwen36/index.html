@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Gravity Flip Puzzle</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; }
+  canvas { display: block; margin: 0 auto; touch-action: none; }
+  #ui {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; color: #e0e0e0; font-family: 'Segoe UI', sans-serif;
+    pointer-events: none; display: none;
+  }
+  #ui h1 { font-size: 48px; margin-bottom: 16px; }
+  #ui p { font-size: 20px; opacity: 0.8; }
+  #instructions {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    color: #888; font-family: 'Segoe UI', sans-serif; font-size: 14px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="ui"><h1 id="ui-title"></h1><p id="ui-sub"></p></div>
+<div id="instructions">SPACE / TAP to flip gravity</div>
+<button id="autoplay" style="position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:4px 8px; font-size:12px; background:#333; color:#fff; border:1px solid #555; border-radius:4px; cursor:pointer; z-index:100;">Auto-Play</button>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const ui = document.getElementById('ui');
+const uiTitle = document.getElementById('ui-title');
+const uiSub = document.getElementById('ui-sub');
+const instructions = document.getElementById('instructions');
+
+const W = 800, H = 600;
+canvas.width = W;
+canvas.height = H;
+
+function resize() {
+  const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+  canvas.style.width = (W * scale) + 'px';
+  canvas.style.height = (H * scale) + 'px';
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Game constants
+const GRAVITY = 900;
+const WALK_SPEED = 110;
+const PLAYER_W = 18;
+const PLAYER_H = 28;
+const KEY_RADIUS = 10;
+
+// Game state
+let state = 'playing'; // playing, won, dead
+let gravityDir = 1; // 1 = down, -1 = up
+let player = { x: 0, y: 0, vx: 0, vy: 0, onGround: false, hasKey: false };
+let key = { x: 0, y: 0, collected: false, bobPhase: 0 };
+let door = { x: 0, y: 0, w: 30, h: 40, open: false };
+let particles = [];
+let deathTimer = 0;
+let winTimer = 0;
+let startTime = 0;
+var frame = 0;
+
+// Expose for recorder
+window.flipGravity = flipGravity;
+
+// Level definition
+const platforms = [
+  // Ground section 1 (start area)
+  { x: 0, y: 520, w: 180, h: 80 },
+  // Gap 1: x=180 to 280
+  // Ground section 2
+  { x: 280, y: 520, w: 120, h: 80 },
+  // Gap 2: x=400 to 500
+  // Ground section 3 (end area with door)
+  { x: 500, y: 520, w: 300, h: 80 },
+
+  // Upper platform 1 (connects start to middle)
+  { x: 140, y: 380, w: 160, h: 16 },
+  // Upper platform 2 (key platform)
+  { x: 380, y: 320, w: 140, h: 16 },
+  // Upper platform 3 (bridge to door area)
+  { x: 560, y: 400, w: 100, h: 16 },
+
+  // Ceiling platform 1
+  { x: 60, y: 60, w: 200, h: 16 },
+  // Ceiling platform 2 (connects to key area from above)
+  { x: 300, y: 60, w: 180, h: 16 },
+  // Ceiling platform 3 (near door)
+  { x: 540, y: 60, w: 160, h: 16 },
+
+  // Wall barriers (force direction changes)
+  { x: 175, y: 420, w: 10, h: 100 },
+  { x: 395, y: 420, w: 10, h: 100 },
+];
+
+const spikes = [
+  // Spike pit in gap 1
+  { x: 180, y: 585, w: 100, h: 15 },
+  // Spike pit in gap 2
+  { x: 400, y: 585, w: 100, h: 15 },
+  // Spike on upper platform 1 (forces timing)
+  { x: 220, y: 364, w: 30, h: 16 },
+];
+
+function initLevel() {
+  state = 'playing';
+  gravityDir = 1;
+  player.x = 40;
+  player.y = 480;
+  player.vx = WALK_SPEED;
+  player.vy = 0;
+  player.onGround = false;
+  player.hasKey = false;
+
+  key.x = 450;
+  key.y = 290;
+  key.collected = false;
+  key.bobPhase = 0;
+
+  door.x = 700;
+  door.y = 480;
+  door.open = false;
+
+  particles = [];
+  deathTimer = 0;
+  winTimer = 0;
+  startTime = performance.now();
+  ui.style.display = 'none';
+  instructions.style.display = 'block';
+}
+
+function flipGravity() {
+  if (state !== 'playing') {
+    if (state === 'won' || state === 'dead') {
+      initLevel();
+    }
+    return;
+  }
+  gravityDir *= -1;
+  player.onGround = false;
+  // Add flip particles
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x: player.x + PLAYER_W / 2,
+      y: player.y + PLAYER_H / 2,
+      vx: (Math.random() - 0.5) * 100,
+      vy: (Math.random() - 0.5) * 100,
+      life: 0.4,
+      maxLife: 0.4,
+      color: gravityDir === 1 ? '#4fc3f7' : '#ff8a65'
+    });
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    flipGravity();
+  }
+});
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  flipGravity();
+});
+canvas.addEventListener('mousedown', (e) => {
+  flipGravity();
+});
+
+function rectCollision(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+function pointInRect(px, py, rx, ry, rw, rh) {
+  return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
+}
+
+function update(dt) {
+  if (state !== 'playing') return;
+
+  // Update key bob
+  key.bobPhase += dt * 3;
+
+  // Apply gravity
+  player.vy += GRAVITY * gravityDir * dt;
+
+  // Clamp fall speed
+  const maxFall = 600;
+  if (player.vy > maxFall) player.vy = maxFall;
+  if (player.vy < -maxFall) player.vy = -maxFall;
+
+  // Move X
+  player.x += player.vx * dt;
+
+  // Wall collisions (reverse direction)
+  player.onGround = false;
+
+  // Screen boundaries
+  if (player.x < 0) {
+    player.x = 0;
+    player.vx = Math.abs(player.vx);
+  }
+  if (player.x + PLAYER_W > W) {
+    player.x = W - PLAYER_W;
+    player.vx = -Math.abs(player.vx);
+  }
+
+  // Platform collisions - X
+  for (const p of platforms) {
+    if (rectCollision(player.x, player.y, PLAYER_W, PLAYER_H, p.x, p.y, p.w, p.h)) {
+      if (player.vx > 0) {
+        player.x = p.x - PLAYER_W;
+        player.vx = -Math.abs(player.vx);
+      } else if (player.vx < 0) {
+        player.x = p.x + p.w;
+        player.vx = Math.abs(player.vx);
+      }
+    }
+  }
+
+  // Move Y
+  player.y += player.vy * dt;
+
+  // Platform collisions - Y
+  for (const p of platforms) {
+    if (rectCollision(player.x, player.y, PLAYER_W, PLAYER_H, p.x, p.y, p.w, p.h)) {
+      if (gravityDir === 1) {
+        // Falling down, land on top
+        if (player.vy > 0) {
+          player.y = p.y - PLAYER_H;
+          player.vy = 0;
+          player.onGround = true;
+        }
+      } else {
+        // Falling up, land on bottom
+        if (player.vy < 0) {
+          player.y = p.y + p.h;
+          player.vy = 0;
+          player.onGround = true;
+        }
+      }
+    }
+  }
+
+  // Screen boundaries Y (death if off screen)
+  if (player.y > H + 50 || player.y < -50) {
+    die();
+    return;
+  }
+
+  // Spike collisions
+  for (const s of spikes) {
+    if (rectCollision(player.x, player.y, PLAYER_W, PLAYER_H, s.x, s.y, s.w, s.h)) {
+      die();
+      return;
+    }
+  }
+
+  // Key collection
+  if (!key.collected) {
+    const dx = (player.x + PLAYER_W / 2) - key.x;
+    const dy = (player.y + PLAYER_H / 2) - key.y;
+    if (Math.sqrt(dx * dx + dy * dy) < KEY_RADIUS + 12) {
+      key.collected = true;
+      player.hasKey = true;
+      door.open = true;
+      // Key collect particles
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        particles.push({
+          x: key.x,
+          y: key.y,
+          vx: Math.cos(angle) * 80,
+          vy: Math.sin(angle) * 80,
+          life: 0.6,
+          maxLife: 0.6,
+          color: '#ffd54f'
+        });
+      }
+    }
+  }
+
+  // Door collision (win condition)
+  if (player.hasKey && rectCollision(player.x, player.y, PLAYER_W, PLAYER_H, door.x, door.y, door.w, door.h)) {
+    win();
+  }
+
+  // Update particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function die() {
+  state = 'dead';
+  deathTimer = 1.5;
+  // Death particles
+  for (let i = 0; i < 20; i++) {
+    particles.push({
+      x: player.x + PLAYER_W / 2,
+      y: player.y + PLAYER_H / 2,
+      vx: (Math.random() - 0.5) * 200,
+      vy: (Math.random() - 0.5) * 200,
+      life: 0.8,
+      maxLife: 0.8,
+      color: '#ef5350'
+    });
+  }
+  uiTitle.textContent = 'Oops!';
+  uiSub.textContent = 'Tap or press SPACE to retry';
+  ui.style.display = 'block';
+}
+
+function win() {
+  state = 'won';
+  winTimer = 1.5;
+  const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+  // Win particles
+  for (let i = 0; i < 30; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 50 + Math.random() * 150;
+    particles.push({
+      x: door.x + door.w / 2,
+      y: door.y + door.h / 2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1.2,
+      maxLife: 1.2,
+      color: ['#4fc3f7', '#ffd54f', '#81c784', '#ff8a65'][Math.floor(Math.random() * 4)]
+    });
+  }
+  uiTitle.textContent = 'You Win!';
+  uiSub.textContent = `Time: ${elapsed}s - Tap or press SPACE to play again`;
+  ui.style.display = 'block';
+}
+
+function draw() {
+  // Background
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  // Draw platforms
+  for (const p of platforms) {
+    const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+    gradient.addColorStop(0, '#4a4e69');
+    gradient.addColorStop(1, '#2a2d42');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    // Top edge highlight
+    ctx.fillStyle = '#6b6f8a';
+    ctx.fillRect(p.x, p.y, p.w, 2);
+  }
+
+  // Draw spikes
+  for (const s of spikes) {
+    ctx.fillStyle = '#ef5350';
+    const spikeW = 12;
+    const numSpikes = Math.floor(s.w / spikeW);
+    for (let i = 0; i < numSpikes; i++) {
+      ctx.beginPath();
+      ctx.moveTo(s.x + i * spikeW, s.y + s.h);
+      ctx.lineTo(s.x + i * spikeW + spikeW / 2, s.y);
+      ctx.lineTo(s.x + (i + 1) * spikeW, s.y + s.h);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Draw door
+  ctx.fillStyle = door.open ? '#81c784' : '#555';
+  ctx.fillRect(door.x, door.y, door.w, door.h);
+  ctx.strokeStyle = door.open ? '#4caf50' : '#333';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(door.x, door.y, door.w, door.h);
+  // Door handle
+  ctx.fillStyle = door.open ? '#ffd54f' : '#777';
+  ctx.beginPath();
+  ctx.arc(door.x + door.w - 8, door.y + door.h / 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Door arch
+  if (door.open) {
+    ctx.fillStyle = '#2e7d32';
+    ctx.fillRect(door.x + 4, door.y + 4, door.w - 8, door.h - 8);
+  }
+
+  // Draw key
+  if (!key.collected) {
+    const bobY = Math.sin(key.bobPhase) * 4;
+    ctx.save();
+    ctx.translate(key.x, key.y + bobY);
+
+    // Key glow
+    ctx.fillStyle = 'rgba(255, 213, 79, 0.2)';
+    ctx.beginPath();
+    ctx.arc(0, 0, KEY_RADIUS + 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Key body
+    ctx.fillStyle = '#ffd54f';
+    ctx.beginPath();
+    ctx.arc(0, 0, KEY_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#f9a825';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Key hole
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Draw player
+  if (state === 'playing' || state === 'won') {
+    ctx.save();
+    ctx.translate(player.x + PLAYER_W / 2, player.y + PLAYER_H / 2);
+
+    // Player body
+    const bodyColor = player.hasKey ? '#81c784' : '#4fc3f7';
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(-PLAYER_W / 2, -PLAYER_H / 2, PLAYER_W, PLAYER_H);
+
+    // Player outline
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-PLAYER_W / 2, -PLAYER_H / 2, PLAYER_W, PLAYER_H);
+
+    // Eyes
+    const eyeY = gravityDir === 1 ? -4 : 4;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-5, eyeY - 2, 4, 4);
+    ctx.fillRect(2, eyeY - 2, 4, 4);
+    ctx.fillStyle = '#1a1a2e';
+    const pupilOffset = player.vx > 0 ? 1 : -1;
+    ctx.fillRect(-5 + pupilOffset, eyeY - 1, 2, 2);
+    ctx.fillRect(2 + pupilOffset, eyeY - 1, 2, 2);
+
+    ctx.restore();
+  }
+
+  // Draw particles
+  for (const p of particles) {
+    const alpha = p.life / p.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3 * alpha, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // HUD
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '14px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(player.hasKey ? 'Key: Collected' : 'Key: Find it!', 10, 24);
+
+  // Gravity indicator
+  ctx.textAlign = 'right';
+  ctx.fillText(gravityDir === 1 ? 'Gravity: Down' : 'Gravity: Up', W - 10, 24);
+
+  // Arrow indicator showing gravity direction
+  ctx.fillStyle = gravityDir === 1 ? '#4fc3f7' : '#ff8a65';
+  ctx.beginPath();
+  const arrowX = W - 30, arrowY = 45;
+  if (gravityDir === 1) {
+    ctx.moveTo(arrowX, arrowY - 8);
+    ctx.lineTo(arrowX - 6, arrowY + 4);
+    ctx.lineTo(arrowX + 6, arrowY + 4);
+  } else {
+    ctx.moveTo(arrowX, arrowY + 8);
+    ctx.lineTo(arrowX - 6, arrowY - 4);
+    ctx.lineTo(arrowX + 6, arrowY - 4);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+let lastTime = 0;
+function gameLoop(timestamp) {
+  frame++;
+  window.frame = frame;
+  if (window.autoPlayPending && window.autoPlayPending.has(frame)) {
+    flipGravity();
+    window.autoPlayPending.delete(frame);
+  }
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  update(dt);
+  draw();
+
+  requestAnimationFrame(gameLoop);
+}
+
+initLevel();
+requestAnimationFrame(gameLoop);
+
+document.getElementById('autoplay').addEventListener('click', () => {
+  window.autoPlayPending = new Set([112, 272, 320, 464]);
+});
+</script>
+</body>
+</html>

@@ -22,6 +22,26 @@ The result does not implement the requested automatically walking character. Ins
 
 ![](docs/screenshots/opencode-minimax.gif)
 
+### OpenCode / Kimi K2.6
+
+OpenCode's subscription [OpenCode Go](https://opencode.ai/go) lets you use several high-performance LLMs at a low price. One of them is Kimi K2.6, which shows stable performance in coding.
+
+[Play the demo](https://abagames.github.io/flipwalker-game-benchmark/opencode-kimik26/)
+
+Stable gameplay and a reasonably interesting level design.
+
+![](docs/screenshots/opencode-kimik26.gif)
+
+### OpenCode / Qwen 3.6 Plus
+
+Another model available through OpenCode Go is Qwen 3.6 Plus.
+
+[Play the demo](https://abagames.github.io/flipwalker-game-benchmark/opencode-qwen36/)
+
+This produced the most complex level design, though the solution itself is not especially unique.
+
+![](docs/screenshots/opencode-qwen36.gif)
+
 ### GitHub Copilot CLI / GPT-5 mini high
 
 [GitHub Copilot](https://github.com/features/copilot) is Microsoft's AI coding agent product, provided through GitHub. Even free users can use lightweight LLMs such as GPT-5 mini and Claude Haiku 4.5.

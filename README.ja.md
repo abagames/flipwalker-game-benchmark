@@ -22,6 +22,26 @@
 
 ![](docs/screenshots/opencode-minimax.gif)
 
+### OpenCode / Kimi K2.6
+
+OpenCode のサブスクリプション [OpenCode Go](https://opencode.ai/ja/go) はいくつかの高性能なLLMを低価格に利用することができる。その一つとして、 Kimi K2.6 がある。このモデルはコーディングにおいて安定した性能を示す。
+
+[デモをプレイ](https://abagames.github.io/flipwalker-game-benchmark/opencode-kimik26/)
+
+安定したゲームプレイとそれなりに興味深いレベルデザインができている。
+
+![](docs/screenshots/opencode-kimik26.gif)
+
+### OpenCode / Qwen 3.6 Plus
+
+OpenCode Go で利用できるモデルとして、 Qwen 3.6 Plus がある。
+
+[デモをプレイ](https://abagames.github.io/flipwalker-game-benchmark/opencode-qwen36/)
+
+最も複雑なレベルデザインを出力したが、解法自体はそれほど特殊ではない。
+
+![](docs/screenshots/opencode-qwen36.gif)
+
 ### GitHub Copilot CLI / GPT-5 mini high
 
 [GitHub Copilot](https://github.com/features/copilot) は Microsoft の AI コーディングエージェント製品で、GitHub を通じて提供される。無料ユーザーでも GPT-5 mini や Claude Haiku 4.5 などの軽量 LLM を利用できる。
