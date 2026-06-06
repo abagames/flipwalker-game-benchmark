@@ -42,6 +42,16 @@ OpenCode Go で利用できるモデルとして、 Qwen 3.6 Plus がある。
 
 ![](docs/screenshots/opencode-qwen36.gif)
 
+### Cursor / Composer 2.5
+
+コーディング向けエージェント・IDE の [Cursor](https://cursor.com/) 向けの独自LLMが [Composer 2.5](https://cursor.com/jp/blog/composer-2-5) である。Kimi K2.5を基盤としたモデルである。
+
+[デモをプレイ](https://abagames.github.io/flipwalker-game-benchmark/cursor-composer25/)
+
+基本的なゲームプレイは問題なく実現できているが、レベルデザインやその解法は単純である。
+
+![](docs/screenshots/cursor-composer25.gif)
+
 ### GitHub Copilot CLI / GPT-5 mini high
 
 [GitHub Copilot](https://github.com/features/copilot) は Microsoft の AI コーディングエージェント製品で、GitHub を通じて提供される。無料ユーザーでも GPT-5 mini や Claude Haiku 4.5 などの軽量 LLM を利用できる。

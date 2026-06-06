@@ -42,6 +42,16 @@ This produced the most complex level design, though the solution itself is not e
 
 ![](docs/screenshots/opencode-qwen36.gif)
 
+### Cursor / Composer 2.5
+
+[Cursor](https://cursor.com/) is a coding-oriented agent and IDE, and [Composer 2.5](https://cursor.com/blog/composer-2-5) is its proprietary LLM. The model is based on Kimi K2.5.
+
+[Play the demo](https://abagames.github.io/flipwalker-game-benchmark/cursor-composer25/)
+
+The basic gameplay is implemented without issues, but the level design and its solution are simple.
+
+![](docs/screenshots/cursor-composer25.gif)
+
 ### GitHub Copilot CLI / GPT-5 mini high
 
 [GitHub Copilot](https://github.com/features/copilot) is Microsoft's AI coding agent product, provided through GitHub. Even free users can use lightweight LLMs such as GPT-5 mini and Claude Haiku 4.5.

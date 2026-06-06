@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlipWalker — Cursor Composer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>FlipWalker</h1>
+      <p>
+        The walker marches on their own — you only flip gravity.
+        <strong>Space</strong> or tap to invert fall. Collect the key, then reach the door.
+        Press <strong>D</strong> to watch the intended route.
+      </p>
+    </header>
+
+    <canvas id="game" aria-label="FlipWalker game canvas"></canvas>
+
+    <div id="hud">
+      <span id="key-status">Key: not yet</span>
+      <span>Space / tap — flip gravity</span>
+      <span>R — restart</span>
+    </div>
+
+    <div id="overlay" aria-live="polite">
+      <div class="card">
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-text"></p>
+      </div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
