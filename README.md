@@ -42,6 +42,16 @@ This produced the most complex level design, though the solution itself is not e
 
 ![](docs/screenshots/opencode-qwen36.gif)
 
+### OpenCode / Qwen 3.7 Max
+
+Qwen 3.7 Max was released as the successor to Qwen 3.6 Plus.
+
+[Play the demo](https://abagames.github.io/flipwalker-game-benchmark/opencode-qwen37/)
+
+The game screen and other visuals are more polished than Qwen 3.6. The level design remains fairly conventional.
+
+![](docs/screenshots/opencode-qwen37.gif)
+
 ### Cursor / Composer 2.5
 
 [Cursor](https://cursor.com/) is a coding-oriented agent and IDE, and [Composer 2.5](https://cursor.com/blog/composer-2-5) is its proprietary LLM. The model is based on Kimi K2.5.

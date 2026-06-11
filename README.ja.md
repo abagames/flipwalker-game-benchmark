@@ -42,6 +42,16 @@ OpenCode Go で利用できるモデルとして、 Qwen 3.6 Plus がある。
 
 ![](docs/screenshots/opencode-qwen36.gif)
 
+### OpenCode / Qwen 3.7 Max
+
+Qwen 3.6 Plus の後継として、 Qwen 3.7 Max がリリースされた。
+
+[デモをプレイ](https://abagames.github.io/flipwalker-game-benchmark/opencode-qwen37/)
+
+Qwen 3.6よりもゲーム画面などは洗練された。レベルデザインはよくある構成にとどまっている。
+
+![](docs/screenshots/opencode-qwen37.gif)
+
 ### Cursor / Composer 2.5
 
 コーディング向けエージェント・IDE の [Cursor](https://cursor.com/) 向けの独自LLMが [Composer 2.5](https://cursor.com/jp/blog/composer-2-5) である。Kimi K2.5を基盤としたモデルである。
