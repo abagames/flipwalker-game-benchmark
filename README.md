@@ -122,8 +122,20 @@ Because this uses the same Claude Opus model family as the Amp entry, the result
 
 ![](docs/screenshots/claudecode-claudeopus47.gif)
 
+### Claude Code / Claude Fable 5 high
+
+[Claude Fable 5](https://www.anthropic.com/news/claude-fable-5-mythos-5) is a high-performance model that makes Anthropic’s “Mythos-level” capabilities broadly available with additional safety controls. “Mythos-level” refers to a top-tier capability class with major gains in long-horizon autonomous work, advanced research support, and cyber-related tasks. Fable 5 is strong at long, complex tasks, while requests in certain high-risk domains, such as cybersecurity, biological topics, and model distillation, are automatically routed to Claude Opus 4.8 via a classifier-based fallback mechanism.
+
+[Play the demo](https://abagames.github.io/flipwalker-game-benchmark/claudecode-claudefable5/)
+
+At first glance, it produced a far more polished game than the models so far. The level design is complex and satisfying to solve, and the game feel—including landing animations, particles, and sound effects—is well done.
+
+![](docs/screenshots/claudecode-claudefable5.gif)
+
 ## Overall Takeaway
 
 As of April 2026, current coding agents and LLMs can implement the rules of a gravity-flip puzzle game without much difficulty. The visual quality varies from entry to entry, but most agents produced a broadly appropriate game screen.
 
 Level design is the weaker point. The instruction to "Test the game by simulating the solution step-by-step" can lead agents to build a simulation and verify that some solution exists. However, that does not mean they can create a complex, rewarding level that truly "feels satisfying to solve." Producing a fun puzzle likely requires more detailed design instructions and a verification harness that can evaluate more than mere solvability.
+
+Claude Fable 5 was released in June 2026, and the picture described above changed significantly. Fable 5 can deliver excellent level design and game feel from a simple prompt alone. For applying coding agents to game development, this feels like a step forward to a higher tier.
