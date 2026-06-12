@@ -128,7 +128,7 @@ Amp のエントリと同じ Claude Opus モデルファミリーを使用して
 
 [デモをプレイ](https://abagames.github.io/flipwalker-game-benchmark/claudecode-claudefable5/)
 
-一見して、今までのモデルよりはるかに洗練せれたゲームができている。レベルデザインは複雑で解きごたえがあり、着地時のアニメーション、パーティクル、効果音などのゲームフィールの出来も良い。
+一見して、今までのモデルよりはるかに洗練されたゲームができている。レベルデザインは複雑で解きごたえがあり、着地時のアニメーション、パーティクル、効果音などのゲームフィールの出来も良い。
 
 ![](docs/screenshots/claudecode-claudefable5.gif)
 
