@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flip Walker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a1a2e;
+      color: #eee;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 12px;
+    }
+    canvas {
+      background: #16213e;
+      border: 4px solid #0f3460;
+      border-radius: 4px;
+      image-rendering: pixelated;
+    }
+    .instructions {
+      text-align: center;
+      font-size: 14px;
+      color: #a0a0c0;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      background: #0f3460;
+      color: #eee;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #1a4a8a; }
+    #message {
+      height: 20px;
+      color: #e94560;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="800" height="480"></canvas>
+  <div id="message"></div>
+  <div class="instructions">
+    The character walks automatically.<br>
+    Press <strong>Space</strong>, click, or tap to flip gravity.<br>
+    Get the <span style="color:#ffd700">key</span> first, then reach the <span style="color:#4fd">door</span>.
+  </div>
+  <div class="controls">
+    <button id="reset">Reset (R)</button>
+    <button id="simulate">Simulate Solution</button>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

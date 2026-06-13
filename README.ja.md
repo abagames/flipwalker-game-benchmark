@@ -32,6 +32,16 @@ OpenCode のサブスクリプション [OpenCode Go](https://opencode.ai/ja/go)
 
 ![](docs/screenshots/opencode-kimik26.gif)
 
+### OpenCode / Kimi K2.7 Code
+
+Kimi K2.6 後継のさらに大規模なモデルが [Kimi K2.7 Code](https://platform.kimi.ai/docs/guide/kimi-k2-7-code-quickstart)だ。長期間のコーディングタスクを高精度でこなすとされている。
+
+[デモをプレイ](https://abagames.github.io/flipwalker-game-benchmark/opencode-kimik27code/)
+
+レベルデザインは単純であり、今回のタスクにおいては、K2.6 と比べて格段な改善は見られない。
+
+![](docs/screenshots/opencode-kimik27code.gif)
+
 ### OpenCode / Qwen 3.6 Plus
 
 OpenCode Go で利用できるモデルとして、 Qwen 3.6 Plus がある。

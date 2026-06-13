@@ -32,6 +32,16 @@ Stable gameplay and a reasonably interesting level design.
 
 ![](docs/screenshots/opencode-kimik26.gif)
 
+### OpenCode / Kimi K2.7 Code
+
+[Kimi K2.7 Code](https://platform.kimi.ai/docs/guide/kimi-k2-7-code-quickstart) is an even larger-scale successor to Kimi K2.6. It is designed to handle long-duration coding tasks with high precision.
+
+[Play the demo](https://abagames.github.io/flipwalker-game-benchmark/opencode-kimik27code/)
+
+The level design is simple, and for this task there is no substantial improvement compared to K2.6.
+
+![](docs/screenshots/opencode-kimik27code.gif)
+
 ### OpenCode / Qwen 3.6 Plus
 
 Another model available through OpenCode Go is Qwen 3.6 Plus.
